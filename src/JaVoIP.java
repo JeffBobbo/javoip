@@ -16,27 +16,9 @@ public class JaVoIP
    */
   public static void main(String[] args)
   {
-    final int PORT = 55555;
-    Communicator comms;
-    try
-    {
-      comms = new Communicator(InetAddress.getLocalHost(), PORT);
-    }
-    catch (UnknownHostException uhe)
-    {
-      System.err.println("FATAL: Failed to get localhost");
-      return;
-    }
-    catch (SocketException e)
-    {
-      System.err.println("FATAL: Failed to open communcication ports");
-      return;
-    }
-
+    final int PORT = 55556;
+    Communicator comms = null;
     BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
-
-    // setup is done, so start the thread
-    comms.start();
 
     boolean run = true;
 
@@ -54,12 +36,45 @@ public class JaVoIP
         System.err.println("    " + e.getMessage());
         continue;
       }
-      if (line.equals("EXIT"))
+      if (line.substring(0, 1).equals("/")) // is this some command
       {
-        run = false;
-        continue;
+        String[] command = line.substring(1).split(" ");
+        switch (command[0])
+        {
+          case "quit":
+            run = false;
+            continue;
+          case "connect":
+          {
+            String host = command[1];
+            String port = command[2];
+
+            if (comms != null)
+              comms.close();
+            try
+            {
+              comms = new Communicator(InetAddress.getByName(host), Integer.parseInt(port));
+              comms.start();
+            }
+            catch (UnknownHostException uhe)
+            {
+              System.out.println("ERROR: Unknown host");
+            }
+            catch (SocketException se)
+            {
+              System.out.println("ERROR: " + se.getMessage());
+            }
+          }
+          break;
+          case "disconnect":
+            if (comms != null)
+              comms.close();
+            break;
+        }
       }
 
+      if (comms == null)
+        continue;
       byte[] buff = line.getBytes();
       try
       {
