@@ -42,7 +42,6 @@ public class CommunicatorDown implements Runnable
 
     while (running)
     {
-
       try
       {
         //Receive a DatagramPacket (note that the string cant be more than 80 chars)

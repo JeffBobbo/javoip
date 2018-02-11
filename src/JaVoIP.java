@@ -1,9 +1,10 @@
 import javax.sound.sampled.LineUnavailableException;
+import java.io.IOException;
 import java.util.Scanner;
 
 public class JaVoIP
 {
-  public static void main(String[] args)
+  public static void main(String[] args) throws IOException
   {
     Scanner scan = new Scanner(System.in);
 
@@ -24,8 +25,17 @@ public class JaVoIP
       return; // bail out
     }
     CommunicatorUp uplink = new CommunicatorUp(host, rport);
+    InputText input = new InputText();
 
     downlink.start();
-    uplink.start();
+    input.start();
+
+    System.out.println("Connected!");
+    while (!input.shouldClose())
+    {
+      String text = input.poll();
+      if (text != null)
+        uplink.sendText(text);
+    }
   }
 }

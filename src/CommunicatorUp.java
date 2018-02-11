@@ -1,23 +1,14 @@
 import java.net.*;
 import java.io.*;
 
-public class CommunicatorUp implements Runnable
+public class CommunicatorUp
 {
   public CommunicatorUp(final String host, final int port)
   {
     this.host = host;
     this.port = port;
-  }
-  public void start()
-  {
-    Thread thread = new Thread(this);
-    thread.start();
-  }
 
-  public void run()
-  {
-    //IP ADDRESS to send to
-    InetAddress client = null;
+    client = null;
     try
     {
       if (host == null)
@@ -30,14 +21,7 @@ public class CommunicatorUp implements Runnable
       System.out.println("ERROR: CommunicatorUp: Could not find client: " + e.getMessage());
       System.exit(1);
     }
-    //***************************************************
 
-    //***************************************************
-    //Open a socket to send from
-    //We dont need to know its port number as we never send anything to it.
-    //We need the try and catch block to make sure no errors occur.
-
-    //DatagramSocket sending_socket;
     try
     {
       socket = new DatagramSocket();
@@ -47,55 +31,32 @@ public class CommunicatorUp implements Runnable
       System.out.println("ERROR: CommunicatorUp: Failed to open socket: " + e.getMessage());
       System.exit(1);
     }
-    //***************************************************
 
-    //***************************************************
-    //Get a handle to the Standard Input (console) so we can read user input
+  }
 
-    BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
-    //***************************************************
+  public void sendText(final String message) throws IOException
+  {
+    //Convert it to an array of bytes
+    byte[] buff = new byte[message.getBytes().length+1];
+    buff[0] = 0;
+    System.arraycopy(message.getBytes(), 0, buff, 1, message.getBytes().length);
 
-    //***************************************************
-    //Main loop.
+    DatagramPacket dp = new DatagramPacket(buff, buff.length, client, port);
+    socket.send(dp);
+  }
 
-    boolean running = true;
+  public void sendAudio(final byte[] block) throws IOException
+  {
+    byte[] buff = new byte[block.length+1];
+    buff[0] = 1;
+    System.arraycopy(block, 0, buff, 1, block.length);
 
-    while (running)
-    {
-      try
-      {
-        //Read in a string from the standard input
-        String str = in.readLine();
-
-        //Convert it to an array of bytes
-        byte[] buffer = new byte[str.getBytes().length+1];
-        buffer[0] = 0;
-        for (int i = 0; i < str.getBytes().length; ++i)
-          buffer[1+i] = str.getBytes()[i];
-
-        //Make a DatagramPacket from it, with client address and port number
-        DatagramPacket packet = new DatagramPacket(buffer, buffer.length, client, port);
-
-        //Send it
-        socket.send(packet);
-
-        //The user can type EXIT to quit
-        if (str.equals("EXIT"))
-          running = false;
-
-      }
-      catch (IOException e)
-      {
-        System.out.println("ERROR: CommunicatorUp: IOException: " + e.getMessage());
-      }
-    }
-
-    //Close the socket
-    socket.close();
-    //***************************************************
+    DatagramPacket dp = new DatagramPacket(buff, buff.length, client, port);
+    socket.send(dp);
   }
 
   private DatagramSocket socket;
   private String host;
+  private InetAddress client;
   private int port;
 }
