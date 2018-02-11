@@ -68,6 +68,12 @@ public class InputText implements Runnable
     return !running;
   }
 
-  private boolean running;
+  public void close()
+  {
+    running = false;
+    queue.clear();
+  }
+
+  private volatile boolean running;
   private volatile Queue<String> queue;
 }

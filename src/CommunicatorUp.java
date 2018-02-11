@@ -55,6 +55,11 @@ public class CommunicatorUp
     socket.send(dp);
   }
 
+  public void close()
+  {
+    socket.close();
+  }
+
   private DatagramSocket socket;
   private String host;
   private InetAddress client;

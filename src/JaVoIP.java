@@ -25,17 +25,37 @@ public class JaVoIP
       return; // bail out
     }
     CommunicatorUp uplink = new CommunicatorUp(host, rport);
-    InputText input = new InputText();
+    InputText inputText = new InputText();
+    InputAudio inputAudio = new InputAudio();
 
     downlink.start();
-    input.start();
+    inputText.start();
+    try
+    {
+      inputAudio.start();
+    }
+    catch (LineUnavailableException e)
+    {
+      System.err.println("Failed to obtain audio recording device: " + e.getMessage());
+      return;
+    }
 
     System.out.println("Connected!");
-    while (!input.shouldClose())
+    while (!inputText.shouldClose())
     {
-      String text = input.poll();
+      String text = inputText.poll();
       if (text != null)
         uplink.sendText(text);
+
+      byte[] block = inputAudio.poll();
+      if (block != null && block.length > 0)
+        uplink.sendAudio(block);
     }
+
+    System.out.println("Shutting down");
+    downlink.close();
+    uplink.close();
+    inputText.close();
+    inputAudio.close();
   }
 }
