@@ -30,20 +30,4 @@ public class DatagramSocketFactory
     }
     throw new SocketException("Unknown SocketType");
   }
-
-  public static DatagramSocket produce(final SocketType type, final int port) throws SocketException
-  {
-    switch (type)
-    {
-      case STOCK:
-        return new DatagramSocket(port);
-      case DATAGRAMSOCKET_2:
-        return new DatagramSocket2(port);
-      case DATAGRAMSOCKET_3:
-        return new DatagramSocket3(port);
-      case DATAGRAMSOCKET_4:
-        return new DatagramSocket4(port);
-    }
-    throw new SocketException("Unknown SocketType");
-  }
 }

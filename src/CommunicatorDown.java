@@ -23,7 +23,7 @@ public class CommunicatorDown implements Runnable
   {
     try
     {
-      socket = DatagramSocketFactory.produce(DatagramSocketFactory.SocketType.STOCK, port);
+      socket = new DatagramSocket(port);
       socket.setSoTimeout(SOCKET_WAIT);
     }
     catch (SocketException e)
