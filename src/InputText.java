@@ -36,6 +36,9 @@ public class InputText implements Runnable
             case "quit":
               running = false;
               continue;
+            case "help":
+              System.out.println("List of available commands:\n  help - show this message\n  quit - quits");
+              break;
             default:
               System.out.println("Unknown command");
               break;

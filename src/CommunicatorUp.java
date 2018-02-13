@@ -24,7 +24,7 @@ public class CommunicatorUp
 
     try
     {
-      socket = new DatagramSocket();
+      socket = DatagramSocketFactory.produce(DatagramSocketFactory.SocketType.STOCK);
     }
     catch (SocketException e)
     {
