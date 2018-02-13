@@ -10,9 +10,9 @@ public class DatagramSocketFactory
   public enum SocketType
   {
     STOCK,
-    BEN_1,
-    BEN_2,
-    BEN_3
+    DATAGRAMSOCKET_2, // causes packet loss (~25%)
+    DATAGRAMSOCKET_3, // causes packet loss (~16%) and rearrangement (~50% of non-dropped packets)
+    DATAGRAMSOCKET_4  // sets a quarter of the packet data to random data 10% of the time.
   }
 
   public static DatagramSocket produce(final SocketType type) throws SocketException
@@ -21,11 +21,11 @@ public class DatagramSocketFactory
     {
       case STOCK:
         return new DatagramSocket();
-      case BEN_1:
+      case DATAGRAMSOCKET_2:
         return new DatagramSocket2();
-      case BEN_2:
+      case DATAGRAMSOCKET_3:
         return new DatagramSocket3();
-      case BEN_3:
+      case DATAGRAMSOCKET_4:
         return new DatagramSocket4();
     }
     throw new SocketException("Unknown SocketType");
@@ -37,11 +37,11 @@ public class DatagramSocketFactory
     {
       case STOCK:
         return new DatagramSocket(port);
-      case BEN_1:
+      case DATAGRAMSOCKET_2:
         return new DatagramSocket2(port);
-      case BEN_2:
+      case DATAGRAMSOCKET_3:
         return new DatagramSocket3(port);
-      case BEN_3:
+      case DATAGRAMSOCKET_4:
         return new DatagramSocket4(port);
     }
     throw new SocketException("Unknown SocketType");
