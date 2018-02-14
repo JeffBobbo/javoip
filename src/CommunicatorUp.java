@@ -25,6 +25,11 @@ public class CommunicatorUp
     try
     {
       socket = DatagramSocketFactory.produce(DatagramSocketFactory.SocketType.STOCK);
+      final int IPTOS_LOWCOST     = 0x02;
+      final int IPTOS_RELIABILITY = 0x04;
+      final int IPTOS_THROUGHPUT  = 0x08;
+      final int IPTOS_LOWDELAY    = 0x10;
+      socket.setTrafficClass(IPTOS_LOWDELAY | IPTOS_THROUGHPUT | IPTOS_LOWCOST);
     }
     catch (SocketException e)
     {
