@@ -60,6 +60,12 @@ public class CommunicatorUp
     socket.send(dp);
   }
 
+  public void send(final byte[] data) throws IOException
+  {
+    DatagramPacket dp = new DatagramPacket(data, data.length, client, port);
+    socket.send(dp);
+  }
+
   public void close()
   {
     socket.close();

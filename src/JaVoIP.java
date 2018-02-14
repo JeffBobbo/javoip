@@ -9,11 +9,14 @@ public class JaVoIP
     Scanner scan = new Scanner(System.in);
 
     System.out.print("Port to host on: ");
-    final int port = scan.nextInt();
-    scan.nextLine();
+    //final int port = scan.nextInt();
+    //scan.nextLine();
     System.out.print("Host to connect to (host port): ");
-    final String host = scan.nextLine();
-    final int rport = Integer.parseInt(host.substring(host.indexOf(" ")+1));
+    //final String host = scan.nextLine();
+    //final int rport = Integer.parseInt(host.substring(host.indexOf(" ")+1));
+    final int port = 55555;
+    final String host = "localhost";
+    final int rport = 55555;
     CommunicatorDown downlink = null;
     try
     {
