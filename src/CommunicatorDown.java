@@ -37,8 +37,8 @@ public class CommunicatorDown implements Runnable
       try
       {
         //Receive a DatagramPacket (note that the string cant be more than 80 chars) -- Why?
-        byte[] buffer = new byte[161];
-        DatagramPacket packet = new DatagramPacket(buffer, 0, 161);
+        byte[] buffer = new byte[1025];
+        DatagramPacket packet = new DatagramPacket(buffer, 0, 1025);
 
         try
         {

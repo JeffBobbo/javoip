@@ -41,6 +41,14 @@ public class JaVoIP
     }
 
     System.out.println("Connected!");
+    final int FRAME_COUNT = 2;
+    final int FRAME_SIZE = 512;
+    final int PAYLOAD_SIZE = FRAME_COUNT * FRAME_SIZE;
+    final int HEADER_SIZE = 0;
+    final int PACKET_SIZE = HEADER_SIZE + PAYLOAD_SIZE;
+    int pos = 0;
+
+    byte[] packet = new byte[PACKET_SIZE];
     while (!inputText.shouldClose())
     {
       String text = inputText.poll();
@@ -48,8 +56,17 @@ public class JaVoIP
         uplink.sendText(text);
 
       byte[] block = inputAudio.poll();
-      if (block != null && block.length > 0)
-        uplink.sendAudio(block);
+      if (block != null)
+      {
+        System.arraycopy(block, 0, packet, pos, FRAME_SIZE);
+        pos += FRAME_SIZE;
+      }
+
+      if (pos >= PACKET_SIZE)
+      {
+        uplink.sendAudio(packet);
+        pos = 0;
+      }
     }
 
     System.out.println("Shutting down");
