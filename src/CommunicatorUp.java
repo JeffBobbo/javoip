@@ -24,7 +24,7 @@ public class CommunicatorUp
 
     try
     {
-      socket = DatagramSocketFactory.produce(DatagramSocketFactory.SocketType.STOCK);
+      socket = DatagramSocketFactory.make(DatagramSocketFactory.SocketType.STOCK);
       final int IPTOS_LOWCOST     = 0x02;
       final int IPTOS_RELIABILITY = 0x04;
       final int IPTOS_THROUGHPUT  = 0x08;
@@ -36,28 +36,20 @@ public class CommunicatorUp
       System.out.println("ERROR: CommunicatorUp: Failed to open socket: " + e.getMessage());
       System.exit(1);
     }
-
   }
 
-  public void sendText(final String message) throws IOException
+  public void setSocketType(DatagramSocketFactory.SocketType type)
   {
-    //Convert it to an array of bytes
-    byte[] buff = new byte[message.getBytes().length+1];
-    buff[0] = 0;
-    System.arraycopy(message.getBytes(), 0, buff, 1, message.getBytes().length);
-
-    DatagramPacket dp = new DatagramPacket(buff, buff.length, client, port);
-    socket.send(dp);
-  }
-
-  public void sendAudio(final byte[] block) throws IOException
-  {
-    byte[] buff = new byte[block.length+1];
-    buff[0] = 1;
-    System.arraycopy(block, 0, buff, 1, block.length);
-
-    DatagramPacket dp = new DatagramPacket(buff, buff.length, client, port);
-    socket.send(dp);
+    try
+    {
+      DatagramSocket sock = DatagramSocketFactory.make(type);
+      socket.close();
+      socket = sock;
+    }
+    catch (SocketException e)
+    {
+      System.err.println("ERROR: Failed to switch to new socket type, continuing on old");
+    }
   }
 
   public void send(final byte[] data) throws IOException
@@ -71,6 +63,15 @@ public class CommunicatorUp
     socket.close();
   }
 
+  /**
+   * @return returns the number of packets sent by this CommunicatorUp.
+   */
+  public int packetsSent()
+  {
+    return pcount;
+  }
+
+  private int pcount;
   private DatagramSocket socket;
   private String host;
   private InetAddress client;

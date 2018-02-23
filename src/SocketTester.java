@@ -5,6 +5,7 @@ public class SocketTester
 {
   public static void main(String[] args) throws LineUnavailableException, IOException, InterruptedException
   {
+    /*
     final int port = 55555;
     final String host = "localhost";
 
@@ -70,5 +71,6 @@ public class SocketTester
     sb.append(recBad).append(" were received with malformed data").append(System.lineSeparator());
     sb.append(recCount).append(" were received in total").append(System.lineSeparator());
     System.out.println(sb.toString());
+    */
   }
 }

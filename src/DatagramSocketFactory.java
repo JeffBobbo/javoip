@@ -15,7 +15,7 @@ public class DatagramSocketFactory
     DATAGRAMSOCKET_4  // sets a quarter of the packet data to random data 10% of the time.
   }
 
-  public static DatagramSocket produce(final SocketType type) throws SocketException
+  public static DatagramSocket make(final SocketType type) throws SocketException
   {
     switch (type)
     {

@@ -6,30 +6,27 @@ public class JaVoIP
 {
   public static void main(String[] args) throws IOException
   {
-    Scanner scan = new Scanner(System.in);
-
-    System.out.print("Port to host on: ");
-    //final int port = scan.nextInt();
-    //scan.nextLine();
-    System.out.print("Host to connect to (host port): ");
-    //final String host = scan.nextLine();
-    //final int rport = Integer.parseInt(host.substring(host.indexOf(" ")+1));
-    final int port = 55555;
-    final String host = "localhost";
-    final int rport = 55555;
-    CommunicatorDown downlink = null;
     try
     {
-      downlink = new CommunicatorDown(port);
+      player = new AudioPlayer();
     }
     catch (LineUnavailableException e)
     {
-      System.err.println("ERROR: Failed to open audio playback device: " + e.getMessage());
-      return; // bail out
+      System.err.println("ERROR: Failed to open audi playback device: " + e.getMessage());
+      return;
     }
-    CommunicatorUp uplink = new CommunicatorUp(host, rport);
-    InputText inputText = new InputText();
-    InputAudio inputAudio = new InputAudio();
+    Scanner scan = new Scanner(System.in);
+
+    System.out.print("Port to host on: ");
+    final int port = scan.nextInt();
+    scan.nextLine();
+    System.out.print("Host to connect to (host port): ");
+    final String host = scan.nextLine();
+    final int rport = Integer.parseInt(host.substring(host.indexOf(" ")+1));
+    downlink = new CommunicatorDown(port);
+    uplink = new CommunicatorUp(host, rport);
+    inputText = new InputText();
+    inputAudio = new InputAudio();
 
     downlink.start();
     inputText.start();
@@ -44,32 +41,43 @@ public class JaVoIP
     }
 
     System.out.println("Connected!");
-    final int FRAME_COUNT = 2;
-    final int FRAME_SIZE = 512;
-    final int PAYLOAD_SIZE = FRAME_COUNT * FRAME_SIZE;
-    final int HEADER_SIZE = 0;
-    final int PACKET_SIZE = HEADER_SIZE + PAYLOAD_SIZE;
     int pos = 0;
 
-    byte[] packet = new byte[PACKET_SIZE];
+    byte[] payload = new byte[PAYLOAD_SIZE];
     while (!inputText.shouldClose())
     {
-      String text = inputText.poll();
-      if (text != null)
-        uplink.sendText(text);
-
       byte[] block = inputAudio.poll();
       if (block != null)
       {
-        System.arraycopy(block, 0, packet, pos, FRAME_SIZE);
+        System.arraycopy(block, 0, payload, pos, FRAME_SIZE);
         pos += FRAME_SIZE;
       }
 
-      if (pos >= PACKET_SIZE)
+      if (pos >= PAYLOAD_SIZE)
       {
-        uplink.sendAudio(packet);
+        byte[] header = new byte[HEADER_SIZE];
+        try
+        {
+          if (Mitigation.useInterleaving)
+          {
+            Mitigation.interleave(payload);
+            header[0] |= 0xF0; // toggle interleaving bit
+          }
+        }
+        catch (IllegalArgumentException ignore)
+        {
+        }
+
+        byte[] packet = new byte[PACKET_SIZE];
+        System.arraycopy(header, 0, packet, 0, HEADER_SIZE);
+        System.arraycopy(payload, 0, packet, 1, PAYLOAD_SIZE);
+        uplink.send(packet);
         pos = 0;
       }
+
+      byte[] snd = downlink.poll();
+      if (snd != null)
+        player.playBlock(snd);
     }
 
     System.out.println("Shutting down");
@@ -78,4 +86,17 @@ public class JaVoIP
     inputText.close();
     inputAudio.close();
   }
+
+  public static AudioPlayer player;
+  public static CommunicatorDown downlink;
+  public static CommunicatorUp uplink;
+  public static InputText inputText;
+  public static InputAudio inputAudio;
+
+  public static final int FRAME_COUNT = 2;
+  public static final int FRAME_SIZE = 512;
+  public static final int PAYLOAD_SIZE = FRAME_COUNT * FRAME_SIZE;
+  public static final int HEADER_SIZE = 1;
+  public static final int PACKET_SIZE = HEADER_SIZE + PAYLOAD_SIZE;
+
 }

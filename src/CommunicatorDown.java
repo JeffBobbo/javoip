@@ -1,6 +1,3 @@
-import CMPC3M06.AudioPlayer;
-
-import javax.sound.sampled.LineUnavailableException;
 import java.net.*;
 import java.io.*;
 import java.util.Arrays;
@@ -9,12 +6,12 @@ import java.util.Queue;
 
 public class CommunicatorDown implements Runnable
 {
-  public CommunicatorDown(final int port) throws LineUnavailableException
+  public CommunicatorDown(final int port)
   {
     this.port = port;
     running = true;
-    player = new AudioPlayer();
     queue = new LinkedList<>();
+    pcount = 0;
   }
   public void start()
   {
@@ -37,31 +34,42 @@ public class CommunicatorDown implements Runnable
 
     while (running)
     {
-      //Receive a DatagramPacket (note that the string cant be more than 80 chars) -- Why?
-      byte[] buffer = new byte[1025];
-      DatagramPacket packet = new DatagramPacket(buffer, 0, 1025);
+      byte[] buffer = new byte[JaVoIP.PACKET_SIZE];
+      DatagramPacket packet = new DatagramPacket(buffer, 0, JaVoIP.PACKET_SIZE);
 
       try
       {
         socket.receive(packet);
+        ++pcount;
+        byte[] header = Arrays.copyOfRange(buffer, 0, JaVoIP.HEADER_SIZE);
+        byte[] payload = Arrays.copyOfRange(buffer, JaVoIP.HEADER_SIZE, buffer.length);
+        if ((header[0] & 0xF0) != 0)
+          Mitigation.interleave(payload);
+        if ((header[0] & 0xF) != 0) // header corrupt, skip it
+          continue;
+        queue.offer(payload);
       }
-      catch (SocketTimeoutException ignore)
+      catch (SocketTimeoutException | IllegalArgumentException ignore)
       {
-        continue;
       }
       catch (IOException e)
       {
         System.out.println("ERROR: CommunicatorDown: IOException: " + e.getMessage());
       }
-
-      queue.offer(buffer);
     }
     socket.close();
   }
 
+
+
   public void close()
   {
     running = false;
+  }
+
+  public int size()
+  {
+    return queue.size();
   }
 
   public byte[] peek()
@@ -74,38 +82,18 @@ public class CommunicatorDown implements Runnable
     return queue.poll();
   }
 
-  public void receive()
+  /**
+   * @return returns the number of packets received by this CommunicatorDown
+   */
+  public int packetsReceived()
   {
-    byte[] bytes = poll();
-    if (bytes == null)
-      return;
-
-    try
-    {
-      switch (bytes[0])
-      {
-        case 0:
-          System.out.println(new String(Arrays.copyOfRange(bytes, 1, bytes.length)));
-          break;
-        case 1:
-          player.playBlock(Arrays.copyOfRange(bytes, 1, bytes.length));
-          break;
-      }
-    }
-    catch (IOException e)
-    {
-      System.out.println("ERROR: CommunicatorDown: IOException" + e.getMessage());
-    }
+    return pcount;
   }
 
-  public int size()
-  {
-    return queue.size();
-  }
+  private int pcount;
 
   private final int SOCKET_WAIT = 10;
   private volatile boolean running;
-  private AudioPlayer player;
   private DatagramSocket socket;
   private Queue<byte[]> queue;
   private int port;
