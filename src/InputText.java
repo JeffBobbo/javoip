@@ -1,4 +1,7 @@
+import com.sun.javaws.exceptions.InvalidArgumentException;
+
 import java.io.*;
+import java.net.SocketException;
 import java.util.LinkedList;
 import java.util.Queue;
 
@@ -52,39 +55,19 @@ public class InputText implements Runnable
             System.out.println("Toggled deafness.");
             break;
           case "socket":
-            DatagramSocketFactory.SocketType type;
-            int i;
             try
             {
-              i = Integer.parseInt(command[1]);
+              int i = Integer.parseInt(command[1]);
+              DatagramSocketFactory.SocketType type = DatagramSocketFactory.getType(i);
+              JaVoIP.uplink.setSocketType(type);
+              System.out.println("Switched to socket " + type.toString());
             }
-            catch (Exception ignore)
+            catch (SocketException e)
             {
-              System.err.println("ERROR: Invalid socket type.");
-              break;
+              System.err.println("ERROR: Invalid socket type: " + e.getMessage());
             }
-            switch (i)
-            {
-              case 1:
-                type = DatagramSocketFactory.SocketType.STOCK;
-                break;
-              case 2:
-                type = DatagramSocketFactory.SocketType.DATAGRAMSOCKET_2;
-                break;
-              case 3:
-                type = DatagramSocketFactory.SocketType.DATAGRAMSOCKET_3;
-                break;
-              case 4:
-                type = DatagramSocketFactory.SocketType.DATAGRAMSOCKET_4;
-                break;
-              default:
-                System.err.println("ERROR: Unknown socket type valid values are [1, 4]");
-                return;
-            }
-            JaVoIP.uplink.setSocketType(type);
-            System.out.println("Switched to socket " + type.toString());
             break;
-          case "interleaving":
+          case "interleave":
             Mitigation.useInterleaving = !Mitigation.useInterleaving;
             System.out.println("Interleaving turned " + (Mitigation.useInterleaving ? "on" : "off"));
             break;

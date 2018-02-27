@@ -1,6 +1,9 @@
 import javax.sound.sampled.LineUnavailableException;
 import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.util.Arrays;
 import java.util.Scanner;
+import java.util.zip.CRC32;
 
 public class JaVoIP
 {
@@ -56,21 +59,27 @@ public class JaVoIP
       if (pos >= PAYLOAD_SIZE)
       {
         byte[] header = new byte[HEADER_SIZE];
+        Arrays.fill(header, (byte)0);
         try
         {
           if (Mitigation.useInterleaving)
           {
             Mitigation.interleave(payload);
-            header[0] |= 0xF0; // toggle interleaving bit
+            //header[HEADER_SIZE-1] |= 0xF0; // toggle interleaving bit
           }
         }
         catch (IllegalArgumentException ignore)
         {
         }
 
+        CRC32 chk = new CRC32();
+        chk.update(payload);
+        long sum = chk.getValue();
+        System.arraycopy(Utilities.longToBytes(sum), 0, header, 0, Long.BYTES);
+
         byte[] packet = new byte[PACKET_SIZE];
         System.arraycopy(header, 0, packet, 0, HEADER_SIZE);
-        System.arraycopy(payload, 0, packet, 1, PAYLOAD_SIZE);
+        System.arraycopy(payload, 0, packet, HEADER_SIZE, PAYLOAD_SIZE);
         uplink.send(packet);
         pos = 0;
       }
@@ -96,7 +105,7 @@ public class JaVoIP
   public static final int FRAME_COUNT = 2;
   public static final int FRAME_SIZE = 512;
   public static final int PAYLOAD_SIZE = FRAME_COUNT * FRAME_SIZE;
-  public static final int HEADER_SIZE = 1;
+  public static final int HEADER_SIZE = Long.BYTES;
   public static final int PACKET_SIZE = HEADER_SIZE + PAYLOAD_SIZE;
 
 }

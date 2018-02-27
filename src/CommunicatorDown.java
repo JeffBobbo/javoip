@@ -3,6 +3,7 @@ import java.io.*;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.Queue;
+import java.util.zip.CRC32;
 
 public class CommunicatorDown implements Runnable
 {
@@ -43,10 +44,23 @@ public class CommunicatorDown implements Runnable
         ++pcount;
         byte[] header = Arrays.copyOfRange(buffer, 0, JaVoIP.HEADER_SIZE);
         byte[] payload = Arrays.copyOfRange(buffer, JaVoIP.HEADER_SIZE, buffer.length);
-        if ((header[0] & 0xF0) != 0)
+        if (Mitigation.useInterleaving)
           Mitigation.interleave(payload);
-        if ((header[0] & 0xF) != 0) // header corrupt, skip it
-          continue;
+
+        long sum_r = Utilities.bytesToLong(header);
+        CRC32 chk = new CRC32();
+        chk.update(payload);
+        long sum_c = chk.getValue();
+
+
+        if (sum_c != sum_r)
+        {
+          ++bcount;
+          // we have a corrupted packet, or at least the checksums don't add up
+          // we should attempt to fix this, using MAGIC
+          
+        }
+
         queue.offer(payload);
       }
       catch (SocketTimeoutException | IllegalArgumentException ignore)
@@ -89,8 +103,10 @@ public class CommunicatorDown implements Runnable
   {
     return pcount;
   }
+  public int corruptReceived() { return bcount; }
 
   private int pcount;
+  private int bcount;
 
   private final int SOCKET_WAIT = 10;
   private volatile boolean running;
