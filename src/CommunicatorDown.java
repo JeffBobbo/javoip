@@ -54,6 +54,7 @@ public class CommunicatorDown implements Runnable
           ++bcount;
           // we have a corrupted packet, or at least the checksums don't add up
           // we should attempt to fix this, using MAGIC
+          // seems we don't have any magic, because this still isn't done
         }
         else
         {

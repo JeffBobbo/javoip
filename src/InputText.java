@@ -81,21 +81,18 @@ public class InputText implements Runnable
               case "off":
                 Mitigation.useChecksums = false;
                 System.out.println("Stopped using checksums.");
-                break;
+                continue;
               case "crc32":
-                Mitigation.useChecksums = true;
                 Mitigation.useCRC32();
-                System.out.println("Switched to CRC32 checksum.");
                 break;
               case "adler32":
-                Mitigation.useChecksums = true;
                 Mitigation.useAdler32();
-                System.out.println("Switched to Adler32 checsum.");
                 break;
               default:
                 System.err.println("ERROR: Unknown or unimplemented checksum.");
-                break;
+                continue;
             }
+            System.out.println("Switched to " + command[1]);
             break;
           default:
             System.out.println("Unknown command");
