@@ -3,7 +3,6 @@ import java.io.*;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.Queue;
-import java.util.zip.CRC32;
 
 public class CommunicatorDown implements Runnable
 {
@@ -45,20 +44,26 @@ public class CommunicatorDown implements Runnable
         byte[] header = Arrays.copyOfRange(buffer, 0, JaVoIP.HEADER_SIZE);
         byte[] payload = Arrays.copyOfRange(buffer, JaVoIP.HEADER_SIZE, buffer.length);
         if (Mitigation.useInterleaving)
-          Mitigation.interleave(payload);
+          Mitigation.interleave(payload, Mitigation.INTERLEAVE_ROWS, Mitigation.INTERLEAVE_COLUMNS);
 
-        long sum_r = Utilities.bytesToLong(header);
-        CRC32 chk = new CRC32();
-        chk.update(payload);
-        long sum_c = chk.getValue();
-
+        int sum_r = Utilities.bytesToInt(Arrays.copyOfRange(header, 0, Integer.BYTES));
+        int sum_c = Mitigation.checksum(payload);
 
         if (sum_c != sum_r)
         {
           ++bcount;
           // we have a corrupted packet, or at least the checksums don't add up
           // we should attempt to fix this, using MAGIC
-          
+        }
+        else
+        {
+          int seq = Utilities.bytesToInt(Arrays.copyOfRange(header, Integer.BYTES, Integer.BYTES+Integer.BYTES));
+          if (seq <= lastSeq)
+          {
+            ++scount;
+            continue;
+          }
+          lastSeq = seq;
         }
 
         queue.offer(payload);
@@ -76,37 +81,25 @@ public class CommunicatorDown implements Runnable
 
 
 
-  public void close()
-  {
-    running = false;
-  }
+  public void close() { running = false; }
 
-  public int size()
-  {
-    return queue.size();
-  }
+  public int size() { return queue.size(); }
 
-  public byte[] peek()
-  {
-    return queue.peek();
-  }
+  public byte[] peek() { return queue.peek(); }
 
-  public byte[] poll()
-  {
-    return queue.poll();
-  }
+  public byte[] poll() { return queue.poll(); }
 
   /**
    * @return returns the number of packets received by this CommunicatorDown
    */
-  public int packetsReceived()
-  {
-    return pcount;
-  }
+  public int packetsReceived() { return pcount; }
   public int corruptReceived() { return bcount; }
+  public int skippedPackets() { return scount; }
 
   private int pcount;
   private int bcount;
+  private int scount;
+  private int lastSeq;
 
   private final int SOCKET_WAIT = 10;
   private volatile boolean running;

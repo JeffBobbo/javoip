@@ -56,6 +56,7 @@ public class CommunicatorUp
   {
     DatagramPacket dp = new DatagramPacket(data, data.length, client, port);
     socket.send(dp);
+    ++pcount;
   }
 
   public void close()
