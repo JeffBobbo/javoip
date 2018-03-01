@@ -1,41 +1,49 @@
-//
-// Source code recreated from a .class file by IntelliJ IDEA
-// (powered by Fernflower decompiler)
-//
-
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
 import javax.sound.sampled.*;
-import javax.sound.sampled.AudioFileFormat.Type;
 import javax.sound.sampled.DataLine.Info;
+import java.util.LinkedList;
+import java.util.Queue;
 
-public class AudioPlayer
+/**
+ * A modified version of the AudioPlayer supplied that runs on it's own thread
+ * the external interface is the same, but now it doesn't block, but rather queues up
+ * blocks to be played internally and plays them as it can.
+ * It also doesn't write files to disk
+ */
+public class AudioPlayer implements Runnable
 {
+  /**
+   * Constructs and starts the AudioPlayer.
+   * @throws LineUnavailableException thrown is the playback device could not be acquired
+   */
   public AudioPlayer() throws LineUnavailableException
   {
-    linearFormat = new AudioFormat(8000.0F, 16, 1, true, false);
-    Info info = new Info(SourceDataLine.class, this.linearFormat);
-    this.sourceDataLine = (SourceDataLine)AudioSystem.getLine(info);
-    this.sourceDataLine.open(this.linearFormat);
-    this.sourceDataLine.start();
-    cached = new ArrayList<>();
-    counter = 0;
+    queue = new LinkedList<>();
+    running = true;
+
+    AudioFormat linearFormat = new AudioFormat(8000.0F, 16, 1, true, false);
+    Info info = new Info(SourceDataLine.class, linearFormat);
+    sourceDataLine = (SourceDataLine)AudioSystem.getLine(info);
+    sourceDataLine.open(linearFormat);
+    sourceDataLine.start();
+
+    Thread thread = new Thread(this);
+    thread.setName("AudioPlayer");
+    thread.start();
   }
 
-  public void playBlock(byte[] voiceData) throws IOException
+  /**
+   * Queues sound data to be played by the internal thread of the AudioPlayer
+   * @param data Data to play, 8kHz 16bit signal in blocks of 512 bytes
+   */
+  public void playBlock(byte[] data)
   {
-    //++this.counter;
-    this.sourceDataLine.write(voiceData, 0, voiceData.length);
-    /*
-    if (this.counter < 938)
-      this.cached.add(voiceData);
-    else if(this.counter == 938)
-      this.writeFile();
-    */
+    queue.offer(data);
   }
 
+  /**
+   * Controls the deafness of the AudioPlayer
+   * @param d if true, then deafen
+   */
   public void deafen(final boolean d)
   {
     BooleanControl control = (BooleanControl)sourceDataLine.getControl(BooleanControl.Type.MUTE);
@@ -43,60 +51,41 @@ public class AudioPlayer
       control.setValue(d);
   }
 
+  /**
+   * @return true if this AudioPlayer is deaf
+   */
   public boolean isDeaf()
   {
     BooleanControl control = (BooleanControl)sourceDataLine.getControl(BooleanControl.Type.MUTE);
     return control.getValue();
   }
 
+  /**
+   * Marks this AudioPlayer to close on the next cycle of it's internal loop
+   */
   public void close()
   {
-    this.sourceDataLine.drain();
-    this.sourceDataLine.stop();
-    this.sourceDataLine.close();
+    running = false;
   }
 
-  private void writeFile() throws IOException
+  /**
+   * the internal thread loop, do not call manually
+   */
+  @Override
+  public void run()
   {
-    Thread thr = new Thread(new AudioPlayer.Writer());
-    thr.start();
+    while (running)
+    {
+      byte[] block = queue.poll();
+      if (block != null)
+        sourceDataLine.write(block, 0, block.length);
+    }
+    sourceDataLine.drain();
+    sourceDataLine.stop();
+    sourceDataLine.close();
   }
 
-  private AudioFormat linearFormat;
   private SourceDataLine sourceDataLine;
-  private ArrayList<byte[]> cached;
-  private int counter;
-
-
-  private class Writer implements Runnable
-  {
-    private Writer()
-    {
-    }
-
-    public void run()
-    {
-      try
-      {
-        byte[] fullArray = new byte[AudioPlayer.this.cached.size() * 512];
-
-        for (int i = 0; i < AudioPlayer.this.cached.size(); ++i)
-          System.arraycopy(AudioPlayer.this.cached.get(i), 0, fullArray, i * 512, 512);
-
-        String filename = "output.wav";
-        File audioFile = new File(filename);
-        System.err.println("Writing File: " + audioFile.getCanonicalPath());
-        ByteArrayInputStream baiStream = new ByteArrayInputStream(fullArray);
-        AudioInputStream aiStream = new AudioInputStream(baiStream, AudioPlayer.this.linearFormat, (long)fullArray.length);
-        AudioSystem.write(aiStream, Type.WAVE, audioFile);
-        aiStream.close();
-        baiStream.close();
-        AudioPlayer.this.cached = null;
-      }
-      catch (IOException var9)
-      {
-        System.err.println(var9.getMessage());
-      }
-    }
-  }
+  private volatile Queue<byte[]> queue;
+  private volatile boolean running;
 }
