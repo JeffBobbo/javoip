@@ -4,18 +4,34 @@ public class Utilities
 {
   public static byte[] longToBytes(long l)
   {
-    buffer.clear();
-    buffer.putLong(0, l);
-    return buffer.array();
+    buffl.clear();
+    buffl.putLong(0, l);
+    return buffl.array();
   }
 
   public static long bytesToLong(byte[] b)
   {
-    buffer.clear();
-    buffer.put(b, 0, b.length);
-    buffer.flip();
-    return buffer.getLong();
+    buffl.clear();
+    buffl.put(b, 0, b.length);
+    buffl.flip();
+    return buffl.getLong();
   }
 
-  private static ByteBuffer buffer = ByteBuffer.allocate(Long.BYTES);
+  public static byte[] intToBytes(int i)
+  {
+    buffi.clear();
+    buffi.putInt(0, i);
+    return buffi.array();
+  }
+
+  public static int bytesToInt(byte[] b)
+  {
+    buffi.clear();
+    buffi.put(b, 0, b.length);
+    buffi.flip();
+    return buffi.getInt();
+  }
+
+  private static ByteBuffer buffl = ByteBuffer.allocate(Long.BYTES);
+  private static ByteBuffer buffi = ByteBuffer.allocate(Integer.BYTES);
 }
