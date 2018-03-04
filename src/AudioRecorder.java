@@ -76,9 +76,9 @@ public class AudioRecorder implements Runnable
   @Override
   public void run()
   {
+    byte[] block = new byte[512];
     while (running)
     {
-      byte[] block = new byte[512];
       try
       {
         linearStream.read(block, 0, block.length);
