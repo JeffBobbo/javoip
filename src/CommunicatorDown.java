@@ -16,6 +16,7 @@ public class CommunicatorDown implements Runnable
   public void start()
   {
     Thread thread = new Thread(this);
+    thread.setName("CommunicatorDown");
     thread.start();
   }
 
@@ -46,10 +47,10 @@ public class CommunicatorDown implements Runnable
         if (Mitigation.useInterleaving)
           Mitigation.interleave(payload, Mitigation.INTERLEAVE_ROWS, Mitigation.INTERLEAVE_COLUMNS);
 
-        int sum_r = Utilities.bytesToInt(Arrays.copyOfRange(header, 0, Integer.BYTES));
+        int sum_r = Utilities.bytesToInt(Arrays.copyOfRange(header, JaVoIP.CHECKSUM_POS, JaVoIP.CHECKSUM_POS+JaVoIP.CHECKSUM_LEN));
         int sum_c = Mitigation.checksum(payload);
 
-        if (sum_c != sum_r)
+        if (Mitigation.useChecksums && sum_c != sum_r)
         {
           ++bcount;
           // we have a corrupted packet, or at least the checksums don't add up
@@ -58,7 +59,7 @@ public class CommunicatorDown implements Runnable
         }
         else
         {
-          int seq = Utilities.bytesToInt(Arrays.copyOfRange(header, Integer.BYTES, Integer.BYTES+Integer.BYTES));
+          int seq = Utilities.bytesToInt(Arrays.copyOfRange(header, JaVoIP.SEQUENCE_POS, JaVoIP.SEQUENCE_POS+JaVoIP.SEQUENCE_LEN));
           if (seq <= lastSeq)
           {
             ++scount;

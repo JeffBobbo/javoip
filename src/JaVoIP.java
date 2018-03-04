@@ -1,6 +1,5 @@
 import javax.sound.sampled.LineUnavailableException;
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.Scanner;
 
 public class JaVoIP
@@ -66,7 +65,7 @@ public class JaVoIP
       {
 
         // include the sequence number
-        System.arraycopy(Utilities.intToBytes(uplink.packetsSent()), 0, header, 0, Integer.BYTES);
+        System.arraycopy(Utilities.intToBytes(uplink.packetsSent()), 0, header, SEQUENCE_POS, SEQUENCE_LEN); // HERE DELPH
 
         // interleave if we need to
         if (Mitigation.useInterleaving)
@@ -74,7 +73,7 @@ public class JaVoIP
 
         // compute checksum if required
         if (Mitigation.useChecksums)
-          System.arraycopy(Utilities.intToBytes(Mitigation.checksum(payload)), 0, header, Integer.BYTES, Integer.BYTES);
+          System.arraycopy(Utilities.intToBytes(Mitigation.checksum(payload)), 0, header, CHECKSUM_POS, CHECKSUM_LEN);
 
         // produce the packet and punch it
         System.arraycopy(header, 0, packet, 0, HEADER_SIZE);
@@ -90,7 +89,13 @@ public class JaVoIP
     }
 
     System.out.println("Shutting down");
-    System.out.println("Skipped " + downlink.skippedPackets() + " of " + downlink.packetsReceived() + " received packets");
+    StringBuilder sb = new StringBuilder("Stats:").append(System.lineSeparator());
+    sb.append("Sent: ").append(uplink.packetsSent()).append(System.lineSeparator());
+    sb.append("Recieved: ").append(downlink.packetsReceived()).append(System.lineSeparator());
+    sb.append("  of which").append(System.lineSeparator());
+    sb.append("    ").append(downlink.corruptReceived()).append(" corrupted").append(System.lineSeparator());
+    sb.append("    ").append(downlink.skippedPackets()).append(" out of order").append(System.lineSeparator());
+    System.out.println(sb.toString());
     recorder.close();
     player.close();
     downlink.close();
@@ -104,10 +109,18 @@ public class JaVoIP
   public static CommunicatorUp uplink;
   public static InputText inputText;
 
+  // header size, 4 byte sequence and 4 byte checksum
+  public static final int SEQUENCE_POS = 0;
+  public static final int SEQUENCE_LEN = Integer.BYTES;
+  public static final int CHECKSUM_POS = SEQUENCE_POS + SEQUENCE_LEN;
+  public static final int CHECKSUM_LEN = Integer.BYTES;
+  public static final int HEADER_SIZE = CHECKSUM_POS + CHECKSUM_LEN;
+
+  // payload size
   public static final int FRAME_COUNT = 2;
   public static final int FRAME_SIZE = 512;
   public static final int PAYLOAD_SIZE = FRAME_COUNT * FRAME_SIZE;
-  public static final int HEADER_SIZE = Integer.BYTES + Integer.BYTES;
+
   public static final int PACKET_SIZE = HEADER_SIZE + PAYLOAD_SIZE;
 
 }
