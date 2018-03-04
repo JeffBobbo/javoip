@@ -11,13 +11,13 @@ public class Mitigation
    */
   public static void interleave(byte[] data, final int rows, final int columns)
   {
-    for (int r = 0; r < rows; ++r)
+    for (int r = 0; r < rows-1; ++r)
     {
-      for (int c = r; c < columns; ++c)
+      for (int c = r+1; c < columns; ++c)
       {
         final int x = r*rows+c;
         final int y = c*rows+r;
-        byte t = data[x];
+        final byte t = data[x];
         data[x] = data[y];
         data[y] = t;
       }
