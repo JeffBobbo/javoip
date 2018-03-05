@@ -31,7 +31,7 @@ public class InputText implements Runnable
         //Read in a string from the standard input
         String str = in.readLine();
 
-        if (str.charAt(0) != '/')
+        if (str.length() == 0 || str.charAt(0) != '/')
           continue;
 
         String[] command = str.substring(1).split(" ");
