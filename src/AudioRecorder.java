@@ -1,7 +1,5 @@
 import javax.sound.sampled.*;
 import javax.sound.sampled.DataLine.Info;
-import java.io.ByteArrayInputStream;
-import java.io.File;
 import java.io.IOException;
 import java.util.LinkedList;
 import java.util.Queue;
@@ -23,7 +21,7 @@ public class AudioRecorder implements Runnable
     running = true;
     queue = new LinkedList<>();
 
-    linearFormat = new AudioFormat(8000.0F, 16, 1, true, false);
+    AudioFormat linearFormat = new AudioFormat(8000.0F, 16, 1, true, false);
     Info info = new Info(TargetDataLine.class, linearFormat);
     targetDataLine = (TargetDataLine)AudioSystem.getLine(info);
     targetDataLine.open(linearFormat);
@@ -78,9 +76,9 @@ public class AudioRecorder implements Runnable
   @Override
   public void run()
   {
+    byte[] block = new byte[512];
     while (running)
     {
-      byte[] block = new byte[512];
       try
       {
         linearStream.read(block, 0, block.length);
@@ -90,13 +88,6 @@ public class AudioRecorder implements Runnable
         System.err.println("ERROR: Failed to read line in: " + e.getMessage());
       }
       queue.offer(block);
-      if (counter < 937)
-     {
-        System.arraycopy(block, 0, cached, counter*block.length, block.length);
-        ++counter;
-      }
-      else if (counter == 938)
-        writeFile();
     }
     targetDataLine.stop();
     targetDataLine.close();
@@ -106,41 +97,4 @@ public class AudioRecorder implements Runnable
   private AudioInputStream linearStream;
   private volatile boolean running;
   private volatile Queue<byte[]> queue;
-
-  private AudioFormat linearFormat;
-  private byte[] cached = new byte[938 * 512];
-  private int counter = 0;
-
-  private void writeFile()
-  {
-    Thread thread = new Thread(new Writer());
-    thread.start();
-  }
-
-  private class Writer implements Runnable
-  {
-    private Writer()
-    {
-    }
-
-    public void run()
-    {
-      try
-      {
-        String filename = "input.wav";
-        File audioFile = new File(filename);
-        System.err.println("Writing File: " + audioFile.getCanonicalPath());
-        ByteArrayInputStream baiStream = new ByteArrayInputStream(cached);
-        AudioInputStream aiStream = new AudioInputStream(baiStream, linearFormat, cached.length);
-        AudioSystem.write(aiStream, AudioFileFormat.Type.WAVE, audioFile);
-        aiStream.close();
-        baiStream.close();
-        cached = null;
-      }
-      catch (IOException var9)
-      {
-        System.err.println(var9.getMessage());
-      }
-    }
-  }
 }

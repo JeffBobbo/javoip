@@ -1,8 +1,5 @@
 import javax.sound.sampled.*;
 import javax.sound.sampled.DataLine.Info;
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.IOException;
 import java.util.LinkedList;
 import java.util.Queue;
 
@@ -23,7 +20,7 @@ public class AudioPlayer implements Runnable
     queue = new LinkedList<>();
     running = true;
 
-    linearFormat = new AudioFormat(8000.0F, 16, 1, true, false);
+    AudioFormat linearFormat = new AudioFormat(8000.0F, 16, 1, true, false);
     Info info = new Info(SourceDataLine.class, linearFormat);
     sourceDataLine = (SourceDataLine)AudioSystem.getLine(info);
     sourceDataLine.open(linearFormat);
@@ -41,13 +38,6 @@ public class AudioPlayer implements Runnable
   public void playBlock(byte[] data)
   {
     queue.offer(data);
-//    if (counter < 468)
-//    {
-//      System.arraycopy(data, 0, cached, counter*data.length, data.length);
-//      ++counter;
-//    }
-//    else if (counter == 938)
-//      this.writeFile();
   }
 
   /**
@@ -98,42 +88,4 @@ public class AudioPlayer implements Runnable
   private SourceDataLine sourceDataLine;
   private volatile Queue<byte[]> queue;
   private volatile boolean running;
-
-  private AudioFormat linearFormat;
-  private byte[] cached = new byte[938 * 512];
-  private int counter = 0;
-
-  private void writeFile()
-  {
-    Thread thread = new Thread(new Writer());
-    thread.start();
-  }
-
-  private class Writer implements Runnable
-  {
-    private Writer()
-    {
-    }
-
-    public void run()
-    {
-      try
-      {
-        String filename = "output.wav";
-        File audioFile = new File(filename);
-        System.err.println("Writing File: " + audioFile.getCanonicalPath());
-        ByteArrayInputStream baiStream = new ByteArrayInputStream(cached);
-        AudioInputStream aiStream = new AudioInputStream(baiStream, linearFormat, cached.length);
-        AudioSystem.write(aiStream, AudioFileFormat.Type.WAVE, audioFile);
-        aiStream.close();
-        baiStream.close();
-        cached = null;
-      }
-      catch (IOException var9)
-      {
-        System.err.println(var9.getMessage());
-      }
-    }
-  }
-
 }

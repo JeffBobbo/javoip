@@ -1,5 +1,6 @@
 import javax.sound.sampled.LineUnavailableException;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.Scanner;
 
 public class JaVoIP
@@ -74,7 +75,8 @@ public class JaVoIP
       {
 
         // include the sequence number
-        System.arraycopy(Utilities.intToBytes(uplink.packetsSent()), 0, header, SEQUENCE_POS, SEQUENCE_LEN); // HERE DELPH
+        byte[] seqbuf = ByteBuffer.allocate(Integer.BYTES).putInt(uplink.packetsSent()).array();
+        System.arraycopy(seqbuf, 0, header, SEQUENCE_POS, SEQUENCE_LEN);
 
         // interleave if we need to
         if (Mitigation.useInterleaving)
@@ -82,7 +84,7 @@ public class JaVoIP
 
         // compute checksum if required
         if (Mitigation.useChecksums)
-          System.arraycopy(Utilities.intToBytes(Mitigation.checksum(payload)), 0, header, CHECKSUM_POS, CHECKSUM_LEN);
+          System.arraycopy(ByteBuffer.allocate(Integer.BYTES).putInt(Mitigation.checksum(payload)).array(), 0, header, CHECKSUM_POS, CHECKSUM_LEN);
 
         // produce the packet and punch it
         System.arraycopy(header, 0, packet, 0, HEADER_SIZE);

@@ -1,5 +1,6 @@
 import java.net.*;
 import java.io.*;
+import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.Queue;
@@ -48,7 +49,7 @@ public class CommunicatorDown implements Runnable
         if (Mitigation.useInterleaving)
           Mitigation.interleave(payload, Mitigation.INTERLEAVE_ROWS, Mitigation.INTERLEAVE_COLUMNS);
 
-        int sum_r = Utilities.bytesToInt(Arrays.copyOfRange(header, JaVoIP.CHECKSUM_POS, JaVoIP.CHECKSUM_POS+JaVoIP.CHECKSUM_LEN));
+        int sum_r = ByteBuffer.wrap(Arrays.copyOfRange(header, JaVoIP.CHECKSUM_POS, JaVoIP.CHECKSUM_POS+JaVoIP.CHECKSUM_LEN)).getInt();
         int sum_c = Mitigation.checksum(payload);
 
         if (Mitigation.useChecksums && sum_c != sum_r)
@@ -59,7 +60,7 @@ public class CommunicatorDown implements Runnable
         }
         else
         {
-          int seq = Utilities.bytesToInt(Arrays.copyOfRange(header, JaVoIP.SEQUENCE_POS, JaVoIP.SEQUENCE_POS+JaVoIP.SEQUENCE_LEN));
+          int seq = ByteBuffer.wrap(Arrays.copyOfRange(header, JaVoIP.SEQUENCE_POS, JaVoIP.SEQUENCE_POS + JaVoIP.SEQUENCE_LEN)).getInt();
           if (seq <= lastSeq)
           {
             ++scount;
