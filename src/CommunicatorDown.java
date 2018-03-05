@@ -12,6 +12,7 @@ public class CommunicatorDown implements Runnable
     running = true;
     queue = new LinkedList<>();
     pcount = 0;
+    lastSeq = -1;
   }
   public void start()
   {
@@ -33,9 +34,9 @@ public class CommunicatorDown implements Runnable
       System.exit(1);
     }
 
+    byte[] buffer = new byte[JaVoIP.PACKET_SIZE];
     while (running)
     {
-      byte[] buffer = new byte[JaVoIP.PACKET_SIZE];
       DatagramPacket packet = new DatagramPacket(buffer, 0, JaVoIP.PACKET_SIZE);
 
       try
@@ -55,7 +56,6 @@ public class CommunicatorDown implements Runnable
           ++bcount;
           // we have a corrupted packet, or at least the checksums don't add up
           // we should attempt to fix this, using MAGIC
-          // seems we don't have any magic, because this still isn't done
         }
         else
         {

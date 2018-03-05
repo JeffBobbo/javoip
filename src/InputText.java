@@ -53,7 +53,7 @@ public class InputText implements Runnable
             System.out.println(sb.toString());
             break;
           case "deafen":
-            JaVoIP.player.deafen(!JaVoIP.player.isDeaf());
+            //JaVoIP.player.deafen(!JaVoIP.player.isDeaf());
             System.out.println("Toggled deafness.");
             break;
           case "mute":

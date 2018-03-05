@@ -17,19 +17,20 @@ public class Utilities
     return buffl.getLong();
   }
 
-  public static byte[] intToBytes(int i)
+  public static byte[] intToBytes(int n)
   {
-    buffi.clear();
-    buffi.putInt(0, i);
-    return buffi.array();
+    byte[] bytes = new byte[Integer.BYTES];
+    for (int i = 0; i < Integer.BYTES; ++i)
+      bytes[i] = (byte)(n >> (8 * i));
+    return bytes;
   }
 
   public static int bytesToInt(byte[] b)
   {
-    buffi.clear();
-    buffi.put(b, 0, b.length);
-    buffi.flip();
-    return buffi.getInt();
+    int n = 0;
+    for (int i = 0; i < Integer.BYTES; ++i)
+      n |= b[i] << (8 * i);
+    return n;
   }
 
   private static ByteBuffer buffl = ByteBuffer.allocate(Long.BYTES);

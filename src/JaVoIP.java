@@ -51,6 +51,15 @@ public class JaVoIP
     byte[] payload = new byte[PAYLOAD_SIZE];
     byte[] header = new byte[HEADER_SIZE];
     byte[] packet = new byte[PACKET_SIZE];
+    AudioPlayer echo;
+    try
+    {
+      echo = new AudioPlayer();
+    } catch (LineUnavailableException e)
+    {
+      e.printStackTrace();
+      return;
+    }
     while (!inputText.shouldClose())
     {
       // transmission tasks
