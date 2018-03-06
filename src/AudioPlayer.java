@@ -75,11 +75,23 @@ public class AudioPlayer implements Runnable
   @Override
   public void run()
   {
+    byte[] prev = null;
     while (running)
     {
-      byte[] block = queue.poll();
-      if (block != null)
-        sourceDataLine.write(block, 0, block.length);
+      byte[] next = queue.poll();
+      if (next == null)
+      {
+        if (prev != null)
+          sourceDataLine.write(prev, 0, prev.length);
+        prev = null;
+      }
+      else
+      {
+        if (queue.size() > 2)
+          next = queue.poll();
+        sourceDataLine.write(next, 0, next.length);
+        prev = next;
+      }
     }
     sourceDataLine.drain();
     sourceDataLine.stop();
