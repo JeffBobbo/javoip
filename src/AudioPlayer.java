@@ -1,7 +1,8 @@
 import javax.sound.sampled.*;
 import javax.sound.sampled.DataLine.Info;
-import java.util.LinkedList;
-import java.util.Queue;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.SynchronousQueue;
 
 /**
  * A modified version of the AudioPlayer supplied that runs on it's own thread
@@ -17,7 +18,7 @@ public class AudioPlayer implements Runnable
    */
   public AudioPlayer() throws LineUnavailableException
   {
-    queue = new LinkedList<>();
+    queue = new LinkedBlockingQueue<>();
     running = true;
 
     AudioFormat linearFormat = new AudioFormat(8000.0F, 16, 1, true, false);
@@ -86,6 +87,6 @@ public class AudioPlayer implements Runnable
   }
 
   private SourceDataLine sourceDataLine;
-  private volatile Queue<byte[]> queue;
+  private BlockingQueue<byte[]> queue;
   private volatile boolean running;
 }

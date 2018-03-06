@@ -1,8 +1,8 @@
 import javax.sound.sampled.*;
 import javax.sound.sampled.DataLine.Info;
 import java.io.IOException;
-import java.util.LinkedList;
-import java.util.Queue;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 
 /**
  * A modified version of the AudioRecorder supplied that runs on it's own thread
@@ -19,7 +19,7 @@ public class AudioRecorder implements Runnable
   public AudioRecorder() throws LineUnavailableException
   {
     running = true;
-    queue = new LinkedList<>();
+    queue = new LinkedBlockingQueue<>();
 
     AudioFormat linearFormat = new AudioFormat(8000.0F, 16, 1, true, false);
     Info info = new Info(TargetDataLine.class, linearFormat);
@@ -96,5 +96,5 @@ public class AudioRecorder implements Runnable
   private TargetDataLine targetDataLine;
   private AudioInputStream linearStream;
   private volatile boolean running;
-  private volatile Queue<byte[]> queue;
+  private BlockingQueue<byte[]> queue;
 }

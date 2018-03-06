@@ -1,9 +1,12 @@
-import java.net.*;
-import java.io.*;
+import java.io.IOException;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
+import java.net.SocketException;
+import java.net.SocketTimeoutException;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.Queue;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 
 public class CommunicatorDown implements Runnable
 {
@@ -11,7 +14,7 @@ public class CommunicatorDown implements Runnable
   {
     this.port = port;
     running = true;
-    queue = new LinkedList<>();
+    queue = new LinkedBlockingQueue<>();
     pcount = 0;
     lastSeq = -1;
   }
@@ -107,6 +110,6 @@ public class CommunicatorDown implements Runnable
   private final int SOCKET_WAIT = 10;
   private volatile boolean running;
   private DatagramSocket socket;
-  private Queue<byte[]> queue;
+  private BlockingQueue<byte[]> queue;
   private int port;
 }
