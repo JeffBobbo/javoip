@@ -52,27 +52,30 @@ public class CommunicatorDown implements Runnable
         if (Mitigation.useInterleaving)
           Mitigation.interleave(payload, Mitigation.INTERLEAVE_ROWS, Mitigation.INTERLEAVE_COLUMNS);
 
-        int sum_r = ByteBuffer.wrap(Arrays.copyOfRange(header, JaVoIP.CHECKSUM_POS, JaVoIP.CHECKSUM_POS+JaVoIP.CHECKSUM_LEN)).getInt();
-        int sum_c = Mitigation.checksum(payload);
-
-        if (Mitigation.useChecksums && sum_c != sum_r)
+        if (Mitigation.useChecksums)
         {
-          ++bcount;
-          // we have a corrupted packet, or at least the checksums don't add up
-          // we should attempt to fix this, using MAGIC
-        }
-        else
-        {
-          int seq = ByteBuffer.wrap(Arrays.copyOfRange(header, JaVoIP.SEQUENCE_POS, JaVoIP.SEQUENCE_POS + JaVoIP.SEQUENCE_LEN)).getInt();
-          if (seq <= lastSeq)
+          int sum_r = ByteBuffer.wrap(Arrays.copyOfRange(header, JaVoIP.CHECKSUM_POS, JaVoIP.CHECKSUM_POS+JaVoIP.CHECKSUM_LEN)).getInt();
+          int sum_c = Mitigation.checksum(payload);
+          if (sum_c == sum_r)
           {
-            ++scount;
-            continue;
+            int seq = ByteBuffer.wrap(Arrays.copyOfRange(header, JaVoIP.SEQUENCE_POS, JaVoIP.SEQUENCE_POS + JaVoIP.SEQUENCE_LEN)).getInt();
+            if (seq <= lastSeq)
+            {
+              ++scount;
+              continue;
+            }
+            lastSeq = seq;
           }
-          lastSeq = seq;
+          else
+          {
+            ++bcount;
+            // we have a corrupted packet, or at least the checksums don't add up
+            // we should attempt to fix this, using MAGIC
+          }
         }
 
-        queue.offer(payload);
+        queue.offer(Arrays.copyOfRange(payload, 0, JaVoIP.FRAME_SIZE));
+        queue.offer(Arrays.copyOfRange(payload, JaVoIP.FRAME_SIZE, JaVoIP.PAYLOAD_SIZE));
       }
       catch (SocketTimeoutException | IllegalArgumentException ignore)
       {
