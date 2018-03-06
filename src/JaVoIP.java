@@ -7,6 +7,20 @@ public class JaVoIP
 {
   public static void main(String[] args) throws IOException
   {
+    // catch sigint and shutdown gracefully -- doesn't seem to work?
+    Runtime.getRuntime().addShutdownHook(new Thread(() ->
+    {
+      if (inputText != null)
+        inputText.close();
+      try
+      {
+        Thread.sleep(50);
+      }
+      catch (InterruptedException ignore)
+      {
+      }
+    }));
+
     {
       Scanner scan = new Scanner(System.in);
 
@@ -60,28 +74,31 @@ public class JaVoIP
       {
         System.arraycopy(block, 0, payload, pos, FRAME_SIZE);
         pos += FRAME_SIZE;
-      }
 
-      if (pos >= PAYLOAD_SIZE)
-      {
+        if (pos >= PAYLOAD_SIZE)
+        {
+          // include the sequence number
+          byte[] seqbuf = ByteBuffer.allocate(Integer.BYTES).putInt(uplink.packetsSent()).array();
+          System.arraycopy(seqbuf, 0, header, SEQUENCE_POS, SEQUENCE_LEN);
 
-        // include the sequence number
-        byte[] seqbuf = ByteBuffer.allocate(Integer.BYTES).putInt(uplink.packetsSent()).array();
-        System.arraycopy(seqbuf, 0, header, SEQUENCE_POS, SEQUENCE_LEN);
+          // interleave if we need to
+          if (Mitigation.useInterleaving)
+          {
+            Mitigation.interleave(payload, Mitigation.INTERLEAVE_ROWS, Mitigation.INTERLEAVE_COLUMNS);
+          }
 
-        // interleave if we need to
-        if (Mitigation.useInterleaving)
-          Mitigation.interleave(payload, Mitigation.INTERLEAVE_ROWS, Mitigation.INTERLEAVE_COLUMNS);
+          // compute checksum if required
+          if (Mitigation.useChecksums)
+          {
+            System.arraycopy(ByteBuffer.allocate(Integer.BYTES).putInt(Mitigation.checksum(payload)).array(), 0, header, CHECKSUM_POS, CHECKSUM_LEN);
+          }
 
-        // compute checksum if required
-        if (Mitigation.useChecksums)
-          System.arraycopy(ByteBuffer.allocate(Integer.BYTES).putInt(Mitigation.checksum(payload)).array(), 0, header, CHECKSUM_POS, CHECKSUM_LEN);
-
-        // produce the packet and punch it
-        System.arraycopy(header, 0, packet, 0, HEADER_SIZE);
-        System.arraycopy(payload, 0, packet, HEADER_SIZE, PAYLOAD_SIZE);
-        uplink.send(packet);
-        pos = 0;
+          // produce the packet and punch it
+          System.arraycopy(header, 0, packet, 0, HEADER_SIZE);
+          System.arraycopy(payload, 0, packet, HEADER_SIZE, PAYLOAD_SIZE);
+          uplink.send(packet);
+          pos = 0;
+        }
       }
 
       // receiving tasks
